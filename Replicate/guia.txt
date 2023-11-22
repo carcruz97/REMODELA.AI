@@ -1,0 +1,114 @@
+Windows 11 - wsl2 - read more https://github.com/replicate/cog/blob/main/docs/wsl2/wsl2.md
+
+PARTES DE DOCUMENTACION ACTUALIZADA
+
+0. Prerequisites
+Before beginning installation, make sure you have:
+
+Windows 11.
+NVIDIA GPU.
+RTX 2000/3000 series
+Kesler/Tesla/Volta/Ampere series
+Other configurations are not guaranteed to work.
+
+1. Install the GPU driver
+Per NVIDIA, the first order of business is to install the latest Game Ready drivers for you NVIDIA GPU.
+
+https://www.nvidia.com/download/index.aspx
+
+I have an NVIDIA RTX 2070 Super
+Click "search", and follow the dialogue to download and install the driver.
+
+Restart your computer once the driver has finished installation.
+2. Unlocking features
+Open Windows Terminal as an administrator.
+
+Use start to search for "Terminal"
+Right click -> Run as administrator...
+Run the following powershell command to enable the Windows Subsystem for Linux and Virtual Machine Platform capabilities.
+
+5. Configure CUDA WSL-Ubuntu Toolkit
+By default, a shimmed version of the CUDA tooling is provided by your Windows GPU drivers.
+
+Important: you should never use instructions for installing CUDA-toolkit in a generic linux fashion. in WSL 2, you always want to use the provided CUDA Toolkit using WSL-Ubuntu Package.
+
+First, open PowerShell or Windows Command Prompt in administrator mode by right-clicking and selecting "Run as administrator". Then enter the following command:
+
+wsl.exe
+This should drop you into your running linux VM. Now you can run the following bash commands to install the correct version of cuda-toolkit for WSL-Ubuntu. Note that the version of CUDA used below may not be the version of CUDA your GPU supports.
+
+wget https://developer.download.nvidia.com/compute/cuda/repos/wsl-ubuntu/x86_64/cuda-wsl-ubuntu.pin
+sudo mv cuda-wsl-ubuntu.pin /etc/apt/preferences.d/cuda-repository-pin-600
+wget https://developer.download.nvidia.com/compute/cuda/12.3.1/local_installers/cuda-repo-wsl-ubuntu-12-3-local_12.3.1-1_amd64.deb
+sudo dpkg -i cuda-repo-wsl-ubuntu-12-3-local_12.3.1-1_amd64.deb
+sudo cp /var/cuda-repo-wsl-ubuntu-12-3-local/cuda-*-keyring.gpg /usr/share/keyrings/
+sudo apt-get update
+sudo apt-get -y install cuda-toolkit-12-3
+
+_________________________
+INSTALAR PYTHON + DEPENDENCIAS
+
+sudo apt-get update
+sudo apt install python3-pip
+python3 --version
+______________________________________________________________________
+
+DESPUES DE INSTALAR COG Y DOCKER
+
+En setting activar la maquina virtual de Ubuntu-22.04 o la distribución elegida
+luego probar si esta instalado cog
+
+replicate@DATbyrushrafa:$ cog
+Containers for machine learning.
+
+To get started, take a look at the documentation:
+https://github.com/replicate/cog
+
+Usage:
+  cog [command]
+
+Examples:
+   To run a command inside a Docker environment defined with Cog:
+      $ cog run echo hello world
+
+Available Commands:
+  build       Build an image from cog.yaml
+  completion  Generate the autocompletion script for the specified shell
+  help        Help about any command
+  init        Configure your project for use with Cog
+  login       Log in to Replicate Docker registry
+  predict     Run a prediction
+  push        Build and push model in current directory to a Docker registry
+  run         Run a command inside a Docker environment
+
+Flags:
+      --debug     Show debugging output
+  -h, --help      help for cog
+      --version   Show version of Cog
+
+Use "cog [command] --help" for more information about a command.
+
+replicate@DATbyrushrafa:$cog login
+(ENTER FOR THIS URL AND COPY-PASTE TO TOKEN https://replicate.com/auth/token)
+
+*Quitarle las autenticaciones a docker
+replicate@DATbyrushrafa:$ rm -rf ~/.docker/config.json
+
+*Restar docker - el comando varia por distribucion y luego loguearte de nuevo con tu cuenta de docker hub
+replicate@DATbyrushrafa:$ docker login
+*Crear un nuevo directorio para el deploy
+replicate@DATbyrushrafa:$ mkdir deploy_model
+replicate@DATbyrushrafa:$ cd deploy_model
+*Inicializar COG para que cree predict.py donde ira el modelo, cog.yaml donde ira el "docker-compose" de cog y un .dockerignore
+replicate@DATbyrushrafa:~/deploy_model$ cog init
+*Instalar visual studio code, tambien podes usar vim con nano
+replicate@DATbyrushrafa:~/deploy_model$ code .
+o tambien
+replicate@DATbyrushrafa:~/deploy_model$ nano cog.yaml | replicate@DATbyrushrafa:~/deploy_model$ nano predict.py
+* Editar ambos archivos con los códigos que aparecen en la carpeta de drive
+replicate@DATbyrushrafa:~/deploy_model$  cog build --no-cache -t "r8.im/carcruz97/scaling_model"
+replicate@DATbyrushrafa:~/deploy_model$  docker run -d -p 5000:5000 "r8.im/carcruz97/scaling_model"
+replicate@DATbyrushrafa:~/deploy_model$  cog run "r8.im/carcruz97/scaling_model"
+replicate@DATbyrushrafa:~/deploy_model$ cog login #de nuevo por si se deslogueo
+replicate@DATbyrushrafa:~/deploy_model$ cog push "r8.im/carcruz97/scaling_model" #si create un repo en replicate, se aparecera un codigo con un link para subirlo al repo r8.im/user_replicate/repository_model
+
