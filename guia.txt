@@ -1,2 +1,0 @@
-sudo apt install python3-pip
-cog build -t scaling_model
