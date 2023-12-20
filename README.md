@@ -8,7 +8,6 @@ Development of the inaugural use case for interior decoration space scaling. A r
 ![Ultralytics](https://assets-global.website-files.com/646dd1f1a3703e451ba81ecc/64777c3e071ec953437e6950_logo.svg)
 <img src="https://media.licdn.com/dms/image/D4D0BAQGwjoOWO4rF8w/company-logo_200_200/0/1697999144816/byrushrafa_logo?e=1707955200&v=beta&t=JXH-2ge9Iw24Uj-yhI6cFyr8pK7rWL4X7ycY6a3Ungo" width="40" alt="byrushrafa">
 ![Imagebb](https://simgbb.com/images/logo.png)
-
 <img src="https://avatars.githubusercontent.com/u/130393848?v=4" width="40" alt="REMODELA.AI">
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
