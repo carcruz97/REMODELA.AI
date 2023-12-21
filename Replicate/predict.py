@@ -91,11 +91,6 @@ class RealSizeObject:
 
       return self.real_size
 
-
-
-
-
-
 class Predictor(BasePredictor):
     def predict(self,image_path: File = Input(description="Image to enlarge"),select_option: int=Input(description="Upload Image write '1'. Calculate Size Objects write '0'"),ref_object: str=Input(description="What object did you choose as a reference?"),ref_measure:str=Input(description="Is it width or height?"),ref_pattern: float = Input(description="What is the size in centimetres?"))-> Any:
         self.image_path=image_path
