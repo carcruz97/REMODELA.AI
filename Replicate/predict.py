@@ -1,30 +1,36 @@
-from skimage import transform,io
 from skimage.draw import rectangle_perimeter
 from typing import Any
-from io import BytesIO
 import requests
 import matplotlib.pyplot as plt
-from cog import BasePredictor, Input
-
+from cog import BasePredictor, Input,File
+from PIL import Image
+from io import BytesIO
+import numpy as np
 class API_Managment:
     def __init__(self,image_path):
         self.image_path=image_path
     def ultralytcis(self):
-        url_model="https://api.ultralytics.com/v1/predict/XXXXXXX"
-        api_key="XXXXXXX"
+        url_model="https://api.ultralytics.com/v1/predict/XXXXXXXXX"
+        api_key="APY-KEY-XXXXXX"
         headers = {"x-api-key": api_key}
         data_dict = {
                 "size": 800,
                 "confidence": 0.25,
                 "iou": 0.45,
         }
-        image_data = requests.get(self.image_path).content
-        files = {"image": image_data}
-        image_data_io = BytesIO(image_data)
-        image = io.imread(image_data_io)
-        response = requests.post(url_model , headers=headers, data=data_dict, files=files)
-        if response.status_code == 200:
-            raise requests.exceptions.HTTPError(500, "Model request failed")
+
+
+        image_data = Image.open(self.image_path)
+        target_height = int((640 / float(image_data.size[0])) * image_data.size[1])
+        resized_image = image_data.resize((640, target_height), Image.ANTIALIAS)
+
+        image = np.array(resized_image)
+
+
+        with BytesIO() as buffer:
+            resized_image.save(buffer, format="JPEG")
+            image_bytes = buffer.getvalue()
+            response = requests.post(url_model, headers=headers, data=data_dict, files={"image": image_bytes})
         object_detection_results = response.json()['data']
         self.real_size_object = RealSizeObject(image, object_detection_results)
         return self.real_size_object
@@ -34,15 +40,15 @@ class API_Managment:
             response = requests.post(
                 "https://api.imgbb.com/1/upload",
                 params={
-                    "expiration": 600,
-                    "key": "XXXXXXX"  # Replace with your actual API key
+                    "expiration": 1200,
+                    "key": "f55bea8fb8190d88688ab7b501f758c9"  # Replace with your actual API key
                 },
                 files={"image": image_file}
             )
 
         if response.status_code == 200:
             imgbb_url = response.json()['data']['url']
-            return f"Image processed and uploaded to imgBB. URL: {imgbb_url}"
+            return "A development for REMODELA.AI. \n" +"Copyright © All rights reserved byrushrafa \n"+"Contact: byrushrafa@hotmail.com\n"+"github: @carcruz97\n"+f"Image processed and uploaded to imgBB. URL: {imgbb_url}"
         else:
             return "Error uploading the image to imgBB."
 
@@ -60,8 +66,7 @@ class RealSizeObject:
         self.indoor[rr, cc] = [255, 0, 0] #red color
         text_x, text_y = x1, y1- 10
         plt.text(text_x, text_y, name, color='black', fontsize=7, backgroundcolor='white')
-      resized_image = transform.resize(self.indoor, (800, 600))  # dimensionalidad
-      plt.imshow(resized_image)
+      plt.imshow(self.indoor)
       plt.savefig('Real_Size_Objects_Indoor.png', bbox_inches='tight', pad_inches=0, format='png')
       plt.close()
       image_result=API_Managment.upload_to_imgbb('Real_Size_Objects_Indoor.png')
@@ -81,7 +86,7 @@ class RealSizeObject:
           'width': round(self.scale*abs(coords['x2'] - coords['x1']),3),
           'height': round(self.scale*abs(coords['y2'] - coords['y1']),3),
           'area':round(self.scale*self.scale* abs(coords['x2'] - coords['x1']) * abs(coords['y2'] - coords['y1']),3),
-          'perimeter': round(self.scale * (self.scale * abs(coords['x2'] - coords['x1']) +self.scale * abs(coords['y2'] - coords['y1'])),3)
+          'perimeter': round(2* (self.scale * abs(coords['x2'] - coords['x1']) +self.scale * abs(coords['y2'] - coords['y1'])),3)
           } for obj, coords in self.output_predict.items()}
 
       return self.real_size
@@ -92,22 +97,18 @@ class RealSizeObject:
 
 
 class Predictor(BasePredictor):
-    
-    def setup(self):
-        self.real_size_object = API_Managment(self.image_path).ultralytcis()
-
-    def predict(self,image_path: str=Input(description="Paste the url of the image"),option_input: int=Input(description="Turn 1 or 0"),ref_object: str=Input(description="What object did you choose as a reference?"),ref_measure:str=Input(description="Enter the measure"),ref_pattern: float = Input(description="Is it height or width?"))-> Any:
+    def predict(self,image_path: File = Input(description="Image to enlarge"),select_option: int=Input(description="Upload Image write '1'. Calculate Size Objects write '0'"),ref_object: str=Input(description="What object did you choose as a reference?"),ref_measure:str=Input(description="Is it width or height?"),ref_pattern: float = Input(description="What is the size in centimetres?"))-> Any:
         self.image_path=image_path
         self.ref_object=ref_object
         self.ref_measure=ref_measure
         self.ref_pattern=ref_pattern
-        self.option_input=option_input
+        self.select_option=select_option
+        self.real_size_object = API_Managment(self.image_path).ultralytcis()
         image_with_labels = self.real_size_object.label_predictions()
-        if self.option_input==1:
+        if self.select_option==1:
             return image_with_labels
         else:
 
             scaled_objects =self.real_size_object.scaling_object(self.ref_pattern, self.ref_object, self.ref_measure)
-            return scaled_objects
-
+            return "Scaling of spaces in centimetres: ",scaled_objects
 
